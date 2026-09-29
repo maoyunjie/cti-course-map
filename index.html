@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>学院课程知识图谱管理平台 - V3 信息工程</title>
+<style>
+*{box-sizing:border-box} body{margin:0;font-family:"Microsoft YaHei",Arial,sans-serif;background:#f5f7fb;color:#172033}
+button,input,select,textarea{font:inherit}
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:238px;background:#101a33;color:#cbd5e1;display:flex;flex-direction:column}
+.brand{padding:22px 20px;border-bottom:1px solid #26314d}
+.brand b{display:block;color:white;font-size:17px}.brand span{font-size:12px;color:#8290aa}
+.menu{padding:14px 10px;flex:1}.menu-item{padding:12px 14px;margin:5px 0;border-radius:8px;cursor:pointer}
+.menu-item:hover,.menu-item.active{background:#2563eb;color:white}
+.user{padding:16px 18px;border-top:1px solid #26314d;font-size:13px}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{height:68px;background:white;border-bottom:1px solid #e6eaf0;display:flex;align-items:center;justify-content:space-between;padding:0 26px}
+.topbar h2{margin:0;font-size:20px}.top-actions{display:flex;gap:10px}
+.btn{border:1px solid #d9e0ea;background:white;border-radius:8px;padding:8px 13px;cursor:pointer}
+.btn.primary{background:#2563eb;color:white;border-color:#2563eb}.btn.danger{color:#dc2626}
+.content{padding:22px;overflow:auto}
+.page{display:none}.page.active{display:block}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{background:white;border:1px solid #e6eaf0;border-radius:12px;padding:18px;box-shadow:0 2px 8px rgba(15,23,42,.03)}
+.metric{font-size:29px;font-weight:700;margin:9px 0}.muted{color:#7a869a;font-size:13px}
+.grid2{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;margin-top:16px}
+h3{margin:0 0 14px;font-size:16px}
+.progress{height:8px;background:#edf1f6;border-radius:10px;overflow:hidden;margin-top:7px}
+.progress i{display:block;height:100%;background:#2563eb}
+.course-row,.analysis-row{padding:13px 0;border-bottom:1px solid #edf0f5;display:flex;align-items:center;justify-content:space-between}
+.badge{padding:4px 8px;border-radius:12px;font-size:12px;background:#eef4ff;color:#2563eb}
+.badge.warn{background:#fff5df;color:#b66a00}.badge.red{background:#fff0f0;color:#d12b2b}.badge.green{background:#eaf8f0;color:#138a4b}
+.toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.graph-layout{display:grid;grid-template-columns:1fr 300px;gap:16px}
+.graph{height:570px;background:linear-gradient(#fff,#fbfcff);border:1px solid #e2e7ef;border-radius:12px;position:relative;overflow:hidden}
+.graph:before{content:"";position:absolute;inset:0;background-image:radial-gradient(#dbe2ec 1px,transparent 1px);background-size:22px 22px}
+.node{position:absolute;transform:translate(-50%,-50%);min-width:112px;padding:11px 13px;text-align:center;background:white;border:2px solid #2563eb;border-radius:10px;box-shadow:0 5px 15px rgba(37,99,235,.12);cursor:pointer;z-index:2;font-size:13px}
+.node.root{background:#2563eb;color:white}.node.skill{border-color:#8b5cf6}.node.chapter{border-color:#16a34a}
+.line{position:absolute;height:2px;background:#b8c2d3;transform-origin:left center;z-index:1}
+.panel label{display:block;font-size:12px;color:#6d7788;margin:12px 0 5px}.panel input,.panel textarea,.panel select{width:100%;padding:9px;border:1px solid #dce2eb;border-radius:7px;background:white}.panel textarea{height:90px;resize:vertical}
+.table{width:100%;border-collapse:collapse;background:white}.table th,.table td{text-align:left;padding:13px;border-bottom:1px solid #edf0f5;font-size:13px}.table th{background:#f8fafc;color:#596579}
+.alert{padding:13px 15px;border-radius:8px;background:#fff7e8;border:1px solid #f5d99f;color:#8b5b00;margin-bottom:12px}
+.map{height:580px;position:relative;background:white;border:1px solid #e4e9f0;border-radius:12px;overflow:hidden}
+.map-title{position:absolute;left:22px;top:20px;z-index:4}
+.legend{position:absolute;right:20px;top:18px;z-index:4;background:white;padding:10px;border:1px solid #e5e9f0;border-radius:8px;font-size:12px}
+.modal{position:fixed;inset:0;background:rgba(10,20,40,.45);display:none;align-items:center;justify-content:center;z-index:20}
+.modal.show{display:flex}.modal-box{width:460px;background:white;border-radius:14px;padding:22px}.modal-box h3{font-size:18px}
+.form-row{margin:12px 0}.form-row input,.form-row select{width:100%;padding:10px;border:1px solid #dce2eb;border-radius:8px}
+@media(max-width:1000px){.cards{grid-template-columns:repeat(2,1fr)}.graph-layout,.grid2{grid-template-columns:1fr}.sidebar{width:190px}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+ <div class="brand"><b>CTI 课程图谱</b><span>Curriculum Knowledge Graph</span></div>
+ <div class="menu">
+  <div class="menu-item active" data-page="dashboard">▦　管理驾驶舱</div>
+  <div class="menu-item" data-page="courses">▤　课程管理</div>
+  <div class="menu-item" data-page="editor">◉　课程图谱编辑</div>
+  <div class="menu-item" data-page="map">⌘　专业知识地图</div>
+  <div class="menu-item" data-page="redundancy">◫　冗余分析</div>
+  <div class="menu-item" data-page="gap">△　缺口分析</div>
+ </div>
+ <div class="user">课程管理工作台<br><span class="muted">学院管理员</span></div>
+</aside>
+
+<main class="main">
+ <header class="topbar"><h2 id="pageTitle">管理驾驶舱</h2><div class="top-actions"><button class="btn" onclick="alert('演示：已刷新分析数据')">刷新分析</button><button class="btn primary" onclick="openModal()">＋ 新建课程</button></div></header>
+ <div class="content">
+
+<section id="dashboard" class="page active"><div class="cards"></div><div class="grid2"><div class="card"></div><div class="card"></div></div></section>
+
+<section id="courses" class="page">
+ <div class="card"><h3>课程管理</h3>
+ <table class="table"><thead><tr><th>课程</th><th>负责人</th><th>知识点</th><th>图谱状态</th><th>操作</th></tr></thead>
+ <tbody id="courseBody"></tbody></table></div>
+</section>
+
+<section id="editor" class="page">
+ <div class="toolbar"><button class="btn primary" onclick="addNode()">＋ 添加知识点</button><button class="btn" onclick="addRelation()">＋ 建立关系</button><button class="btn" onclick="alert('演示：系统已从教学大纲中抽取 12 个候选知识点')">AI 从大纲抽取</button><button class="btn" onclick="alert('图谱已保存')">保存图谱</button></div>
+ <div class="graph-layout">
+  <div id="graph" class="graph"></div>
+  <div class="card panel"><h3>节点属性</h3><div id="emptyHint" class="muted">点击左侧节点查看并编辑属性。</div>
+   <div id="nodeForm" style="display:none">
+    <label>名称</label><input id="nodeName">
+    <label>类型</label><select id="nodeType"><option>课程</option><option>章节</option><option>知识点</option><option>能力</option></select>
+    <label>重要程度</label><select><option>核心</option><option>重点</option><option>一般</option></select>
+    <label>说明</label><textarea id="nodeDesc"></textarea>
+    <div style="display:flex;gap:8px;margin-top:14px"><button class="btn primary" onclick="saveNode()">保存</button><button class="btn danger" onclick="deleteNode()">删除节点</button></div>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section id="map" class="page"></section>
+
+<section id="redundancy" class="page"></section>
+
+<section id="gap" class="page"></section>
+
+ </div>
+</main>
+</div>
+
+<div id="modal" class="modal"><div class="modal-box"><h3>新建课程</h3>
+ <div class="form-row"><input id="newCourse" placeholder="课程名称"></div>
+ <div class="form-row"><input placeholder="课程代码，例如 CS204"></div>
+ <div class="form-row"><select><option>计算机科学与技术</option><option>人工智能</option><option>软件工程</option></select></div>
+ <div style="text-align:right"><button class="btn" onclick="closeModal()">取消</button> <button class="btn primary" onclick="createCourse()">创建课程</button></div>
+</div></div>
+
+<script>
+const titles={dashboard:'管理驾驶舱',courses:'课程管理',editor:'课程图谱编辑',map:'专业知识地图',redundancy:'冗余分析',gap:'缺口分析'};
+document.querySelectorAll('.menu-item').forEach(el=>el.onclick=()=>showPage(el.dataset.page));
+function showPage(id){
+ document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+ document.querySelectorAll('.menu-item').forEach(x=>x.classList.remove('active'));
+ document.getElementById(id).classList.add('active');
+ document.querySelector(`[data-page="${id}"]`).classList.add('active');
+ document.getElementById('pageTitle').innerText=titles[id];
+}
+function goEditor(){showPage('editor')}
+function openModal(){document.getElementById('modal').classList.add('show')}
+function closeModal(){document.getElementById('modal').classList.remove('show')}
+function createCourse(){
+ let n=document.getElementById('newCourse').value.trim()||'新建课程';
+ document.getElementById('courseBody').insertAdjacentHTML('beforeend',`<tr><td>${n}</td><td>当前用户</td><td>0</td><td><span class="badge warn">建设中</span></td><td><button class="btn" onclick="goEditor()">开始建图</button></td></tr>`);
+ closeModal();showPage('courses');
+}
+
+let nodes=[];let edges=[];let selected=null;
+function renderGraph(){
+ const g=document.getElementById('graph');g.innerHTML='';
+ edges.forEach(e=>{let a=nodes.find(n=>n.id==e[0]),b=nodes.find(n=>n.id==e[1]);if(!a||!b)return;
+  let x1=a.x/100*g.clientWidth,y1=a.y/100*g.clientHeight,x2=b.x/100*g.clientWidth,y2=b.y/100*g.clientHeight;
+  let d=Math.hypot(x2-x1,y2-y1),ang=Math.atan2(y2-y1,x2-x1)*180/Math.PI;
+  let l=document.createElement('div');l.className='line';l.style=`left:${x1}px;top:${y1}px;width:${d}px;transform:rotate(${ang}deg)`;g.appendChild(l);
+ });
+ nodes.forEach(n=>{let el=document.createElement('div');el.className='node '+(n.cls||'');el.style.left=n.x+'%';el.style.top=n.y+'%';el.innerText=n.name;el.onclick=()=>selectNode(n.id);g.appendChild(el)});
+}
+function selectNode(id){selected=id;let n=nodes.find(x=>x.id==id);document.getElementById('emptyHint').style.display='none';document.getElementById('nodeForm').style.display='block';nodeName.value=n.name;nodeType.value=n.type;nodeDesc.value=n.desc||''}
+function saveNode(){if(!selected)return;let n=nodes.find(x=>x.id==selected);n.name=nodeName.value;n.type=nodeType.value;n.desc=nodeDesc.value;renderGraph()}
+function deleteNode(){if(!selected)return;nodes=nodes.filter(n=>n.id!=selected);edges=edges.filter(e=>!e.includes(selected));selected=null;nodeForm.style.display='none';emptyHint.style.display='block';renderGraph()}
+function addNode(){let id=Math.max(...nodes.map(n=>n.id))+1;nodes.push({id,name:'新知识点',type:'知识点',x:25+Math.random()*50,y:45+Math.random()*35,desc:'点击右侧编辑'});renderGraph();selectNode(id)}
+function addRelation(){if(nodes.length>1){edges.push([nodes[nodes.length-2].id,nodes[nodes.length-1].id]);renderGraph();alert('演示：已在最近两个节点间建立关系')}}
+function renderMap(){}
+window.onload=()=>{renderGraph();renderMap()}
+window.onresize=renderGraph;
+</script>
+<style>
+.menu{overflow:auto}.menu-item{font-size:14px}.cti-note{padding:14px 16px;background:#eef4ff;border:1px solid #d7e4ff;border-radius:10px;line-height:1.7;margin-bottom:16px;color:#365580;font-size:14px}.cti-top{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px}.cti-top h3{margin:0}.cti-top select,.cti-top input,.cti-input{padding:9px;border:1px solid #d9e0ea;border-radius:7px;max-width:100%;background:white}.cti-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.cti-table-wrap{overflow:auto}.cti-table{border-collapse:collapse;width:100%;font-size:14px}.cti-table th,.cti-table td{padding:12px;border-bottom:1px solid #e8edf4;text-align:left}.cti-table th{background:#f8fafc;color:#596579}.cti-table small{display:block;margin-top:4px;line-height:1.45;color:#69778d;font-size:12px}.cti-table select{padding:8px;border:1px solid #d9e0ea;border-radius:7px;background:white}.cti-code{color:#2563eb;font-weight:700;white-space:nowrap}.cti-legend{display:flex;gap:10px;flex-wrap:wrap;font-size:13px;margin:12px 0}.cti-legend span{padding:6px 9px;border-radius:6px}.lv0{background:#edf0f5;color:#65718a}.lv1{background:#e2ecff;color:#174a99}.lv2{background:#bad5ff;color:#153d7a}.lv3{background:#627be1;color:white}.lv4{background:#343688;color:white}.cti-matrix{min-width:1100px}.cti-matrix td,.cti-matrix th{text-align:center;min-width:43px;padding:10px 6px}.cti-matrix td:first-child,.cti-matrix th:first-child{position:sticky;left:0;background:white;text-align:left;min-width:180px;z-index:1}.cti-matrix button{border:0;cursor:pointer;border-radius:5px;width:31px;height:30px}.cti-radar{width:100%;max-height:470px;display:block}.cti-radar text{font-family:Arial,'Microsoft YaHei',sans-serif;font-size:12px;fill:#53637b}.cti-actions{display:flex;gap:8px;flex-wrap:wrap}.cti-savebar{position:sticky;bottom:-22px;padding:14px;background:#fff;border-top:1px solid #dce4f0;display:flex;align-items:center;justify-content:space-between;z-index:3}.cti-toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:#142546;color:white;padding:13px 23px;border-radius:9px;z-index:100;box-shadow:0 5px 20px #0003}.cti-empty{padding:35px;text-align:center;color:#728099}.cti-sub{font-size:13px;color:#677890;line-height:1.7}.cti-section{margin-top:18px}.cti-checks{display:flex;gap:15px;flex-wrap:wrap;margin:14px 0}.cti-checks label{font-size:14px}.cti-status{margin:12px 0;color:#526481}.cti-dictionary input{width:100%}button:focus-visible,select:focus-visible,input:focus-visible,.menu-item:focus-visible{outline:3px solid #f59e0b;outline-offset:2px}@media(max-width:1150px){.cti-grid{grid-template-columns:1fr}}@media(max-width:650px){.sidebar{width:155px;flex-shrink:0}.brand{padding:15px 10px}.brand b{font-size:15px}.menu{padding:8px 4px}.menu-item{padding:10px 6px;font-size:13px}.content{padding:12px}.topbar{padding:10px;height:auto;min-height:68px;flex-wrap:wrap}.topbar h2{font-size:17px}.cti-table td,.cti-table th{padding:9px 5px}.cti-savebar{bottom:-12px}.cards{grid-template-columns:1fr}}
+</style>
+<script>
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const names=[['Design and Implement','设计与应用能力'],['Communicate','沟通能力'],['Manage','管理能力'],['Ethics','伦理素养'],['Acquisition and Application of Scientific and Technical Knowledge','科学技术知识的获取与应用'],['Problem-Solving and Critical Thinking','解决问题与批判性思维能力'],['Teamwork and Collaboration','团队合作能力'],['Adaptability and Innovation','适应性与创新能力'],['Project Management','项目管理能力'],['Risk Management','风险管理能力'],['Continuous Learning and Self-Development','持续学习与自我发展能力'],['Environmental Awareness and Sustainable Development','环境意识与可持续发展'],['International Perspective and Cross-Cultural Communication','国际视野与跨文化沟通能力'],['Engineering knowledge','工程知识'],['Problem analysis','问题分析'],['Design and develop solutions','设计/开发解决方案'],['Research','研究能力'],['Use the up-to-date tools','使用现代工具'],['others related to the course','课程其他专业能力']];
+const levels=['未录入','I · 了解','A · 应用','M · 掌握','E · 专精'];
+const key='cti-curriculum-v3-import-20260928';
+const seed=()=>({"skills":[{"id":"G01","en":"Design and Implement","cn":"设计与应用能力"},{"id":"G02","en":"Communicate","cn":"沟通能力"},{"id":"G03","en":"Manage","cn":"管理能力"},{"id":"G04","en":"Ethics","cn":"伦理素养"},{"id":"G05","en":"Acquisition and Application of Scientific and Technical Knowledge","cn":"科学技术知识的获取与应用"},{"id":"G06","en":"Problem-Solving and Critical Thinking","cn":"解决问题与批判性思维能力"},{"id":"G07","en":"Teamwork and Collaboration","cn":"团队合作能力"},{"id":"G08","en":"Adaptability and Innovation","cn":"适应性与创新能力"},{"id":"G09","en":"Project Management","cn":"项目管理能力"},{"id":"G10","en":"Risk Management","cn":"风险管理能力"},{"id":"G11","en":"Continuous Learning and Self-Development","cn":"持续学习与自我发展能力"},{"id":"G12","en":"Environmental Awareness and Sustainable Development","cn":"环境意识与可持续发展"},{"id":"G13","en":"International Perspective and Cross-Cultural Communication","cn":"国际视野与跨文化沟通能力"},{"id":"S01","en":"Engineering knowledge","cn":"工程知识"},{"id":"S02","en":"Problem analysis","cn":"问题分析"},{"id":"S03","en":"Design and develop solutions","cn":"设计/开发解决方案"},{"id":"S04","en":"Research","cn":"研究能力"},{"id":"S05","en":"Use the up-to-date tools","cn":"使用现代工具"},{"id":"S06","en":"others related to the course","cn":"课程其他专业能力"}],"courses":[{"id":"c1","name":"C程序与算法分析","major":"信息工程专业","group":"专业核心课程","teacher":"张老师","values":[3,2,2,2,3,3,2,2,2,2,2,1,1,3,3,3,2,3,2],"code":"ICE3302P","infoUpdated":"2026/9/28 16:43:35"},{"id":"c2","name":"数据结构","major":"信息工程专业","group":"专业核心课程","teacher":"李老师","values":[3,2,1,1,3,4,2,2,1,1,3,1,1,3,4,3,2,3,2],"code":"ICE3402P","infoUpdated":"2026/9/28 16:44:00"},{"id":"c3","name":"移动通信系统","major":"信息工程专业","group":"专业核心课程","teacher":"王老师","values":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],"updated":"2026/9/28 16:18:36","code":"ICE4412P","infoUpdated":"2026/9/28 16:44:19"}],"graphs":{"c1":{"nodes":[{"id":1,"name":"C程序与算法分析","type":"课程","x":48,"y":14,"cls":"root","desc":"课程核心节点"},{"id":2,"name":"关系模型","type":"知识点","x":25,"y":35,"desc":"关系数据库基础理论"},{"id":3,"name":"SQL","type":"知识点","x":48,"y":38,"desc":"结构化查询语言"},{"id":4,"name":"事务管理","type":"知识点","x":72,"y":35,"desc":"ACID与并发控制"},{"id":5,"name":"范式","type":"知识点","x":16,"y":62,"desc":"数据库规范化"},{"id":6,"name":"查询优化","type":"知识点","x":48,"y":66,"desc":"查询计划与性能优化"},{"id":7,"name":"数据管理能力","type":"能力","x":77,"y":66,"cls":"skill","desc":"专业核心能力"}],"edges":[[1,2],[1,3],[1,4],[2,5],[3,6],[4,7],[6,7],[6,7]],"reviewRequired":true,"reviewNote":"备份中保留了原数据库示例知识点，请核对是否适用于当前课程。"}},"majorProgress":[{"name":"信息工程专业","progress":92},{"name":"机械工程专业","progress":81},{"name":"能源与动力工程专业","progress":76},{"name":"基础阶段","progress":68}]});
+let db=seed(),storageOK=true;
+try{const saved=JSON.parse(localStorage.getItem(key)||'null');if(saved&&saved.skills?.length===19&&Array.isArray(saved.courses)&&saved.courses.every(c=>c.values?.length===19&&c.values.every(v=>Number.isInteger(v)&&v>=0&&v<=4))){db=saved;db.graphs ||= {};}}catch(e){storageOK=false;}
+let selectedCourse=db.courses[0]?.id,draft=null,dirty=false,current='dashboard';
+function toast(t){document.querySelector('.cti-toast')?.remove();const el=document.createElement('div');el.className='cti-toast';el.setAttribute('role','status');el.textContent=t;document.body.append(el);setTimeout(()=>el.remove(),3300)}
+function persist(){try{localStorage.setItem(key,JSON.stringify(db));storageOK=true;return true}catch(e){storageOK=false;toast('浏览器无法保存到本地，请导出备份；本次会话仍可使用。');return false}}
+function download(name,data,type){const a=document.createElement('a'),u=URL.createObjectURL(new Blob([data],{type}));a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
+function options(cs,value){return cs.map(c=>`<option value="${esc(c.id)}" ${c.id===value?'selected':''}>${esc(c.name)}</option>`).join('')}
+function legend(){return `<div class="cti-legend">${levels.map((l,i)=>`<span class="lv${i}">${i?`Level ${i} · `:''}${l}</span>`).join('')}</div>`}
+const newPages={ctiSkills:'CTI 能力点管理',ctiEdit:'课程－能力编辑',ctiMatrix:'CTI 能力矩阵',ctiAnalysis:'CTI 能力分析'};
+for(const [id,title] of Object.entries(newPages)){titles[id]=title;const menu=document.createElement('div');menu.className='menu-item';menu.dataset.page=id;menu.textContent=({ctiSkills:'◇',ctiEdit:'✎',ctiMatrix:'▦',ctiAnalysis:'◎'}[id])+'　'+title;document.querySelector('.menu').append(menu);const section=document.createElement('section');section.id=id;section.className='page';document.querySelector('.content').append(section)}
+const baseShow=window.showPage;
+window.showPage=function(id){if(dirty&&!confirm('当前修改尚未保存，放弃本次修改？'))return;dirty=false;current=id;baseShow(id);if(id==='ctiSkills')renderSkills();if(id==='ctiEdit')renderEdit();if(id==='ctiMatrix')renderMatrix();if(id==='ctiAnalysis')renderAnalysis();if(id==='courses')renderCourses();if(id==='editor')requestAnimationFrame(renderGraph)};
+document.querySelectorAll('.menu-item').forEach(el=>{el.onclick=()=>showPage(el.dataset.page);el.tabIndex=0;el.setAttribute('role','button');el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();el.click()}}});
+function renderSkills(){ $('ctiSkills').innerHTML=`<div class="cti-note">按提供截图录入：13 个 Generic Skills + 6 个 Specific Skills。编号固定；可维护中英文名称，所有矩阵与图表同步更新。</div><div class="cti-grid">${[['Generic Skills · 通用能力点',0,13],['Specific Skills · 专业能力点',13,19]].map(([t,start,end])=>`<div class="card"><h3>${t}</h3><div class="cti-table-wrap"><table class="cti-table cti-dictionary"><tbody>${db.skills.slice(start,end).map((s,j)=>`<tr><td class="cti-code">${s.id}</td><td><input class="cti-input" aria-label="${s.id}中文名称" id="cn${start+j}" value="${esc(s.cn)}"><input class="cti-input" style="margin-top:6px" aria-label="${s.id}英文名称" id="en${start+j}" value="${esc(s.en)}"></td></tr>`).join('')}</tbody></table></div></div>`).join('')}</div><div class="card cti-section"><h3>固定能力等级</h3>${legend()}<p class="cti-sub">Level 1 Introduction (I) 了解 · Level 2 Application (A) 应用 · Level 3 Mastery (M) 掌握 · Level 4 Expertise (E) 专精</p><button class="btn primary" id="saveSkills">保存能力点名称</button></div>`;
+$('ctiSkills').querySelectorAll('input').forEach(el=>el.oninput=()=>dirty=true);
+$('saveSkills').onclick=()=>{if(db.skills.some((s,i)=>!$('cn'+i).value.trim()||!$('en'+i).value.trim()))return toast('请填写全部中英文名称');db.skills.forEach((s,i)=>{s.cn=$('cn'+i).value.trim();s.en=$('en'+i).value.trim()});dirty=false;if(persist())toast('19 项能力名称已保存')};}
+function renderEdit(){const c=db.courses.find(c=>c.id===selectedCourse)||db.courses[0];if(!c)return;selectedCourse=c.id;draft=[...c.values];$('ctiEdit').innerHTML=`<div class="cti-top"><div><h3>课程能力等级录入</h3><p class="cti-sub">四级中逐项选择；空白项保持“未录入”，不属于能力等级。</p></div><label>选择课程 <select id="editCourse">${options(db.courses,c.id)}</select></label></div><div class="cti-note">${esc(c.major)} / ${esc(c.group)} · 负责人 ${esc(c.teacher)} · ${c.updated?'最近保存 '+esc(c.updated):'已导入备份数据（可修改）'}</div>${legend()}<div class="card"><div class="cti-top"><h3>19 项 CTI 能力</h3><div><select id="batchLevel" aria-label="批量等级">${levels.slice(1).map((l,i)=>`<option value="${i+1}">${l}</option>`).join('')}</select> <button class="btn" id="batch">全部设为该等级</button></div></div><table class="cti-table"><thead><tr><th>编号</th><th>能力点</th><th>能力等级</th></tr></thead><tbody>${db.skills.map((s,i)=>`${i===0||i===13?`<tr><th colspan="3">${i===0?'Generic Skills · 13 项通用能力':'Specific Skills · 6 项专业能力'}</th></tr>`:''}<tr><td class="cti-code">${s.id}</td><td>${esc(s.cn)}<small>${esc(s.en)}</small></td><td><select data-level="${i}" aria-label="${s.id}能力等级">${levels.map((l,v)=>`<option value="${v}" ${draft[i]===v?'selected':''}>${l}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table></div><div class="cti-savebar"><span id="editStatus"></span><div><button class="btn" id="cancelEdit">撤销修改</button> <button class="btn primary" id="saveLevels">保存能力等级</button></div></div>`;
+function status(){ $('editStatus').textContent=`已录入 ${draft.filter(Boolean).length} / 19 项${dirty?' · 有未保存修改':' · '+(c.updated?'已保存':'备份数据')}`;}
+status();$('editCourse').onchange=e=>{if(dirty&&!confirm('放弃未保存的修改并切换课程？')){e.target.value=selectedCourse;return}selectedCourse=e.target.value;dirty=false;renderEdit()};
+$('ctiEdit').querySelectorAll('[data-level]').forEach(el=>el.onchange=()=>{draft[+el.dataset.level]=+el.value;dirty=true;status()});
+$('batch').onclick=()=>{draft.fill(+$('batchLevel').value);$('ctiEdit').querySelectorAll('[data-level]').forEach(el=>el.value=draft[+el.dataset.level]);dirty=true;status()};
+$('cancelEdit').onclick=()=>{dirty=false;renderEdit()};$('saveLevels').onclick=()=>{c.values=[...draft];c.updated=new Date().toLocaleString('zh-CN');dirty=false;if(persist())toast('能力等级已保存，矩阵与分析已同步更新');status()};}
+function matrix(cs){return `<div class="cti-table-wrap"><table class="cti-table cti-matrix"><thead><tr><th>课程 / 能力点</th>${db.skills.map(s=>`<th title="${esc(s.cn+' / '+s.en)}">${s.id}</th>`).join('')}<th>录入状态</th></tr></thead><tbody>${cs.map(c=>`<tr><td>${esc(c.name)}<small>${esc(c.major)}</small></td>${c.values.map((v,i)=>`<td><button class="lv${v}" data-edit="${esc(c.id)}" title="${esc(db.skills[i].cn)}：${levels[v]}" aria-label="${esc(c.name+' '+db.skills[i].cn+' '+levels[v])}">${['—','I','A','M','E'][v]}</button></td>`).join('')}<td>${c.values.filter(Boolean).length}/19<br><small>${c.values.every(Boolean)?'已完整录入':c.values.some(Boolean)?'待补全':'未录入'}</small></td></tr>`).join('')}</tbody></table></div>`}
+function bindMatrix(root){root.querySelectorAll('[data-edit]').forEach(el=>el.onclick=()=>{selectedCourse=el.dataset.edit;showPage('ctiEdit')})}
+function renderMatrix(){const complete=db.courses.filter(c=>c.values.every(Boolean)).length;$('ctiMatrix').innerHTML=`<div class="cti-top"><h3>课程 × CTI 能力矩阵</h3><div class="cti-actions"><button class="btn" id="exportCSV">导出矩阵 CSV</button><button class="btn" id="backup">导出完整备份</button><button class="btn" id="restore">导入备份</button><input type="file" id="backupFile" accept=".json" hidden></div></div><div class="cti-note">${db.courses.length} 门课程 · ${complete} 门完整录入 · ${db.courses.length-complete} 门待录入或补全。点击任意能力单元格进入对应课程编辑。数据保存在本浏览器，建议导出备份以便转移。</div><div class="card">${legend()}${matrix(db.courses)}</div><div class="card cti-section"><h3>能力编号索引</h3><div class="cti-grid">${db.skills.map(s=>`<div class="cti-sub"><b class="cti-code">${s.id}</b> ${esc(s.cn)}</div>`).join('')}</div></div>`;bindMatrix($('ctiMatrix'));
+$('exportCSV').onclick=()=>{const rows=[['课程','专业','课程群',...db.skills.map(s=>s.id+' '+s.cn)],...db.courses.map(c=>[c.name,c.major,c.group,...c.values.map(v=>levels[v])])];download('CTI课程能力矩阵.csv','\ufeff'+rows.map(row=>row.map(v=>'"'+String(v).replace(/^[=+@-]/,"'</body>").replace(/"/g,'""')+'"').join(',')).join('\r\n'),'text/csv;charset=utf-8')};
+$('backup').onclick=()=>download('CTI完整备份.json',JSON.stringify(db,null,2),'application/json');$('restore').onclick=()=>$('backupFile').click();$('backupFile').onchange=async e=>{try{const v=JSON.parse(await e.target.files[0].text());if(v.skills?.length!==19||!v.skills.every((s,i)=>s.id===db.skills[i].id&&typeof s.cn==='string'&&typeof s.en==='string')||!Array.isArray(v.courses)||!v.courses.length||new Set(v.courses.map(c=>c.id)).size!==v.courses.length||!v.courses.every(c=>['id','name','major','group','teacher'].every(k=>typeof c[k]==='string')&&c.values?.length===19&&c.values.every(n=>Number.isInteger(n)&&n>=0&&n<=4)))throw Error();if(!confirm('用备份替换当前课程和能力数据？'))return;db=v;db.graphs||={};selectedCourse=db.courses[0].id;persist();renderMatrix();toast('备份已导入')}catch(e){toast('备份格式无效，请选择本页面导出的 JSON 文件')}};}
+function radar(series){const cx=230,cy=226,r=162,point=(i,v)=>{const a=i*2*Math.PI/19-Math.PI/2;return [cx+Math.cos(a)*r*v/4,cy+Math.sin(a)*r*v/4]},poly=values=>values.map((v,i)=>point(i,v).join(',')).join(' ');return `<svg class="cti-radar" viewBox="0 0 460 455" role="img" aria-label="19项CTI能力雷达图，完整数值见下方明细表">${[1,2,3,4].map(l=>`<polygon points="${poly(Array(19).fill(l))}" fill="${l===4?'#f4f7fe':'none'}" stroke="#dce4f1"/>`).reverse().join('')}${db.skills.map((s,i)=>{const p=point(i,4),label=point(i,4.55);return `<line x1="${cx}" y1="${cy}" x2="${p[0]}" y2="${p[1]}" stroke="#e1e7f0"/><text x="${label[0]}" y="${label[1]+4}" text-anchor="middle">${s.id}<title>${esc(s.cn)}</title></text>`}).join('')}${series.map(s=>`<polygon points="${poly(s.values)}" fill="${s.color}" fill-opacity=".12" stroke="${s.color}" stroke-width="2.5"/>${s.values.map((v,i)=>{let p=point(i,v);return `<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="${s.color}"><title>${esc(s.name+' · '+db.skills[i].cn)}：${v.toFixed(2)}</title></circle>`}).join('')}`).join('')}${[1,2,3,4].map(v=>`<text x="235" y="${cy-r*v/4+13}">${v}</text>`).join('')}</svg><div class="cti-legend">${series.map(s=>`<span style="color:${s.color};border:1px solid ${s.color}">● ${esc(s.name)}</span>`).join('')}</div>`}
+function renderAnalysis(){const majors=[...new Set(db.courses.map(c=>c.major))],groups=[...new Set(db.courses.map(c=>c.group))];$('ctiAnalysis').innerHTML=`<div class="cti-top"><h3>CTI 能力覆盖分析</h3><div class="cti-actions"><select id="majorFilter" aria-label="专业筛选"><option value="">全部专业</option>${majors.map(v=>`<option>${esc(v)}</option>`).join('')}</select><select id="groupFilter" aria-label="课程群筛选"><option value="">全部课程群</option>${groups.map(v=>`<option>${esc(v)}</option>`).join('')}</select><select id="method" aria-label="聚合口径"><option value="max">最高等级</option><option value="avg">平均等级（仅已录入）</option></select></div></div><div class="cti-note">课程等级是培养要求，不代表学生实际达成。专业/课程群默认取各能力的最高等级；平均值只计算已录入课程。未录入项绘图为 0，仅作缺失占位，不是第五个等级。等级取自导入备份或后续保存，不代表已完成教学质量审核。</div><div id="analysisBody"></div>`;
+['majorFilter','groupFilter','method'].forEach(id=>$(id).onchange=updateAnalysis);updateAnalysis();}
+function updateAnalysis(){const cs=db.courses.filter(c=>(!$('majorFilter').value||c.major===$('majorFilter').value)&&(!$('groupFilter').value||c.group===$('groupFilter').value)),method=$('method').value;const aggregate=db.skills.map((s,i)=>{let vs=cs.map(c=>c.values[i]).filter(Boolean);return vs.length?(method==='max'?Math.max(...vs):vs.reduce((a,b)=>a+b,0)/vs.length):0});$('analysisBody').innerHTML=`<div class="cards"><div class="card"><div class="muted">纳入课程</div><div class="metric">${cs.length}</div></div><div class="card"><div class="muted">完整录入课程</div><div class="metric">${cs.filter(c=>c.values.every(Boolean)).length}</div></div><div class="card"><div class="muted">已有录入的能力</div><div class="metric">${aggregate.filter(Boolean).length} / 19</div></div><div class="card"><div class="muted">至少一门达到掌握 / 专精</div><div class="metric">${db.skills.filter((s,i)=>cs.some(c=>c.values[i]>=3)).length} / 19</div></div></div>${!cs.length?'<div class="card cti-empty cti-section">当前筛选下没有课程，请调整专业或课程群。</div>':`<div class="cti-grid cti-section"><div class="card"><h3>能力点维度雷达图</h3><p class="cti-sub">${method==='max'?'各能力在筛选课程中的最高等级':'各能力在已录入课程中的平均等级'} · 量程 0–4</p>${radar([{name:'专业 / 课程群覆盖',values:aggregate,color:'#2563eb'}])}</div><div class="card"><div class="cti-top"><h3>课程雷达图</h3><select id="radarCourse" aria-label="课程雷达图选择">${options(cs,cs[0].id)}</select></div><div id="singleRadar"></div></div></div><div class="card cti-section"><h3>课程对比 · 最多 3 门</h3><div class="cti-checks">${cs.map((c,i)=>`<label><input type="checkbox" data-compare="${esc(c.id)}" ${i<2?'checked':''}> ${esc(c.name)}</label>`).join('')}</div><div id="compareRadar"></div></div><div class="card cti-section"><h3>能力覆盖热力矩阵</h3>${legend()}${matrix(cs)}</div><div class="card cti-section"><h3>19 项能力覆盖明细</h3><div class="cti-table-wrap"><table class="cti-table"><thead><tr><th>能力点</th><th>聚合等级</th><th>已录入课程 / 总课程</th><th>录入覆盖率</th></tr></thead><tbody>${db.skills.map((s,i)=>{const count=cs.filter(c=>c.values[i]>0).length;return `<tr><td><b class="cti-code">${s.id}</b> ${esc(s.cn)}<small>${esc(s.en)}</small></td><td>${count?aggregate[i].toFixed(2):'未录入'}</td><td>${count} / ${cs.length}</td><td>${Math.round(count/cs.length*100)}%</td></tr>`}).join('')}</tbody></table></div></div>`}`;
+if(!cs.length)return;const single=()=>{const c=cs.find(c=>c.id===$('radarCourse').value);$('singleRadar').innerHTML=radar([{name:c.name,values:c.values,color:'#7c3aed'}])};$('radarCourse').onchange=single;single();const compare=()=>{const ids=[...$('analysisBody').querySelectorAll('[data-compare]:checked')].map(e=>e.dataset.compare);$('compareRadar').innerHTML=ids.length?radar(ids.map((id,i)=>{let c=cs.find(c=>c.id===id);return {name:c.name,values:c.values,color:['#2563eb','#e17728','#13a08c'][i]}})):'<div class="cti-empty">请选择 1–3 门课程查看对比。</div>'};$('analysisBody').querySelectorAll('[data-compare]').forEach(el=>el.onchange=()=>{if($('analysisBody').querySelectorAll('[data-compare]:checked').length>3){el.checked=false;toast('最多对比 3 门课程')}compare()});compare();bindMatrix($('analysisBody'));}
+function renderCourses(){ $('courseBody').innerHTML=db.courses.map(c=>`<tr><td>${esc(c.name)}<small class="cti-sub" style="display:block">${esc(c.major)} · ${esc(c.group)}${c.code?' · '+esc(c.code):''}</small></td><td>${esc(c.teacher)}</td><td>${knowledge(c).length}${db.graphs[c.id]?.reviewRequired?'（待核对）':''}</td><td><span class="badge ${c.values.every(Boolean)?'green':'warn'}">CTI ${c.values.filter(Boolean).length}/19</span></td><td><button class="btn" data-info="${esc(c.id)}">编辑课程信息</button> <button class="btn" data-graph="${esc(c.id)}">编辑图谱</button> <button class="btn" data-edit="${esc(c.id)}">编辑能力</button></td></tr>`).join('');bindMatrix($('courses'));$('courses').querySelectorAll('[data-info]').forEach(el=>el.onclick=()=>openCourseInfo(el.dataset.info));$('courses').querySelectorAll('[data-graph]').forEach(el=>el.onclick=()=>{selectedCourse=el.dataset.graph;loadGraph();showPage('editor')});}
+const modalRows=$('modal').querySelectorAll('.form-row');modalRows[1].querySelector('input').id='courseCode';modalRows[2].querySelector('select').id='courseMajor';const groupRow=document.createElement('div');groupRow.className='form-row';groupRow.innerHTML='<select id="courseGroup" aria-label="课程群"><option>专业核心课程</option><option>通识课程</option><option>实践课程</option></select>';$('modal').querySelector('.modal-box').insertBefore(groupRow,$('modal').querySelector('.modal-box').lastElementChild);
+let editingCourseId=null,courseBefore='';
+$('modal').querySelector('.modal-box').innerHTML=`<h3 id="courseModalTitle">新建课程</h3><div class="form-row"><label for="newCourse">课程名称 *</label><input id="newCourse" maxlength="100" required></div><div class="form-row"><label for="courseCode">课程代码</label><input id="courseCode" maxlength="50" placeholder="例如 CS204"></div><div class="form-row"><label for="courseMajor">所属专业 *</label><input id="courseMajor" list="majorSuggestions" maxlength="100" required><datalist id="majorSuggestions"></datalist></div><div class="form-row"><label for="courseGroup">课程群 *</label><input id="courseGroup" list="groupSuggestions" maxlength="100" required><datalist id="groupSuggestions"></datalist></div><div class="form-row"><label for="courseTeacher">负责人 *</label><input id="courseTeacher" maxlength="100" required></div><p id="courseFormError" role="alert" style="color:#b91c1c"></p><div style="text-align:right"><button class="btn" onclick="closeModal()">取消</button> <button class="btn primary" id="saveCourseInfo" onclick="createCourse()">创建课程</button></div>`;
+$('modal').setAttribute('role','dialog');$('modal').setAttribute('aria-modal','true');$('modal').setAttribute('aria-labelledby','courseModalTitle');$('modal').querySelector('.modal-box').style.cssText='max-height:90vh;overflow:auto;width:min(460px,95vw)';
+const courseFields=['newCourse','courseCode','courseMajor','courseGroup','courseTeacher'];
+function courseSnapshot(){return JSON.stringify(courseFields.map(id=>$(id).value))}
+function openCourseInfo(id){if(dirty)return toast('请先保存或撤销当前能力编辑');const c=db.courses.find(c=>c.id===id);editingCourseId=c?.id||null;const values=[c?.name||'',c?.code||'',c?.major||db.courses[0]?.major||'',c?.group||'专业核心课程',c?.teacher||'当前用户'];courseFields.forEach((id,i)=>$(id).value=values[i]);$('courseModalTitle').textContent=c?'编辑课程信息':'新建课程';$('saveCourseInfo').textContent=c?'保存课程信息':'创建课程';$('courseFormError').textContent='';$('majorSuggestions').innerHTML=[...new Set(db.courses.map(c=>c.major))].map(v=>`<option value="${esc(v)}">`).join('');$('groupSuggestions').innerHTML=[...new Set(['专业核心课程','通识课程','实践课程',...db.courses.map(c=>c.group)])].map(v=>`<option value="${esc(v)}">`).join('');courseBefore=courseSnapshot();$('modal').classList.add('show');$('newCourse').focus()}
+window.openModal=()=>openCourseInfo();window.closeModal=()=>{if(courseSnapshot()!==courseBefore&&!confirm('放弃尚未保存的课程信息修改？'))return;$('modal').classList.remove('show')};
+$('modal').addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();closeModal()}if(e.key==='Tab'){const controls=[...$('modal').querySelectorAll('input,button')],first=controls[0],last=controls.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
+window.createCourse=()=>{const [name,code,major,group,teacher]=courseFields.map(id=>$(id).value.trim());if(!name||!major||!group||!teacher){$('courseFormError').textContent='请填写课程名称、所属专业、课程群和负责人。';return}let c=db.courses.find(c=>c.id===editingCourseId),wasEdit=!!c;if(c){const oldName=c.name;Object.assign(c,{name,code,major,group,teacher});const graph=db.graphs[c.id];if(graph?.nodes)graph.nodes.forEach(n=>{if(n.type==='课程'&&(n.id===1||n.name===oldName))n.name=name});if(selectedCourse===c.id)nodes.forEach(n=>{if(n.type==='课程'&&(n.id===1||n.name===oldName))n.name=name});}else{c={id:'c'+Date.now(),name,code,major,group,teacher,values:Array(19).fill(0)};db.courses.push(c)}c.infoUpdated=new Date().toLocaleString('zh-CN');const saved=persist();courseBefore=courseSnapshot();$('modal').classList.remove('show');renderCourses();syncGraphSelect();if(current==='editor')renderGraph();if(current==='ctiMatrix')renderMatrix();if(current==='ctiAnalysis')renderAnalysis();if(saved)toast(wasEdit?'课程信息已保存，能力等级和知识图谱已保留':'新课程已创建，可录入 19 项 CTI 能力')};
+const templateNodes=JSON.parse(JSON.stringify(nodes)),templateEdges=JSON.parse(JSON.stringify(edges));
+function loadGraph(){const c=db.courses.find(c=>c.id===selectedCourse)||db.courses[0],g=db.graphs[c.id];nodes=JSON.parse(JSON.stringify(g?.nodes||[{id:1,name:c.name,type:'课程',x:48,y:18,cls:'root',desc:'课程核心节点'}]));if(!g)nodes.filter(n=>n.id===1&&n.type==='课程').forEach(n=>n.name=c.name);edges=JSON.parse(JSON.stringify(g?.edges||[]));selected=null;$('nodeForm').style.display='none';$('emptyHint').style.display='block'}
+const graphSelect=document.createElement('select');graphSelect.className='cti-input';graphSelect.setAttribute('aria-label','图谱课程');function syncGraphSelect(){graphSelect.innerHTML=options(db.courses,selectedCourse)}syncGraphSelect();$('editor').querySelector('.toolbar').prepend(graphSelect);graphSelect.onchange=()=>{selectedCourse=graphSelect.value;loadGraph();renderGraph()};
+const previousShow=window.showPage;window.showPage=id=>{previousShow(id);if(current===id&&id==='editor'){syncGraphSelect();loadGraph();requestAnimationFrame(renderGraph)}};
+$('editor').querySelectorAll('button').forEach(b=>{if(b.textContent==='保存图谱')b.onclick=()=>{db.graphs[selectedCourse]={reviewRequired:db.graphs[selectedCourse]?.reviewRequired||false,reviewNote:db.graphs[selectedCourse]?.reviewNote||'',nodes:JSON.parse(JSON.stringify(nodes)),edges:JSON.parse(JSON.stringify(edges))};if(persist())toast('当前课程图谱已保存');renderGraphReview()};});
+window.addNode=()=>{let id=Math.max(0,...nodes.map(n=>n.id))+1;nodes.push({id,name:'新知识点',type:'知识点',x:25+Math.random()*50,y:45+Math.random()*35,desc:''});renderGraph();selectNode(id)};
+const banner=document.createElement('div');banner.className='cti-note';banner.innerHTML='V3 · 以导入备份及本地后续保存为准。专业建设进度为手动填报；知识统计仅纳入已核对图谱。 <button class="btn primary" id="startCTI">进入能力矩阵 →</button>';$('dashboard').prepend(banner);$('startCTI').onclick=()=>showPage('ctiMatrix');
+document.querySelector('.top-actions .btn').onclick=()=>{if(current==='ctiAnalysis')renderAnalysis();toast('CTI 分析已根据已保存数据更新；原有分析为演示数据')};
+const progressCard=$('dashboard').querySelector('.grid2 .card');
+const defaultProgress=seed().majorProgress;
+function getMajorProgress(){if(!Array.isArray(db.majorProgress)||!db.majorProgress.length||!db.majorProgress.every(p=>typeof p.name==='string'&&p.name.trim()&&Number.isFinite(p.progress)&&p.progress>=0&&p.progress<=100))db.majorProgress=defaultProgress.map(p=>({...p}));return db.majorProgress}
+function renderMajorProgress(edit=false){const rows=getMajorProgress();progressCard.innerHTML=`<div class="cti-top"><h3>专业图谱建设进度</h3>${edit?'':'<button class="btn" id="editMajorProgress">编辑专业与进度</button>'}</div><p class="cti-sub">手动维护的展示数据；修改此处专业名称不会更改课程的所属专业。</p>${edit?`<div class="cti-table-wrap"><table class="cti-table"><thead><tr><th>专业名称</th><th>建设进度（%）</th></tr></thead><tbody>${rows.map((p,i)=>`<tr><td><input class="cti-input" id="majorName${i}" aria-label="第${i+1}个专业名称" value="${esc(p.name)}" maxlength="100" style="width:100%;min-width:150px"></td><td><input class="cti-input" id="majorPercent${i}" aria-label="第${i+1}个专业建设进度" type="number" min="0" max="100" step="1" value="${p.progress}" style="width:95px"></td></tr>`).join('')}</tbody></table></div><p id="majorProgressError" role="alert" style="color:#b91c1c"></p><div class="cti-actions"><button class="btn primary" id="saveMajorProgress">保存专业与进度</button><button class="btn" id="cancelMajorProgress">取消</button></div>`:rows.map(p=>`<div class="course-row"><div style="flex:1;min-width:0;margin-right:20px;overflow-wrap:anywhere">${esc(p.name)}<div class="progress" role="progressbar" aria-label="${esc(p.name)}建设进度" aria-valuenow="${p.progress}" aria-valuemin="0" aria-valuemax="100"><i style="width:${p.progress}%"></i></div></div><b>${p.progress}%</b></div>`).join('')}`;
+if(!edit){$('editMajorProgress').onclick=()=>renderMajorProgress(true);return}
+progressCard.querySelectorAll('input').forEach(el=>el.oninput=()=>dirty=true);
+$('cancelMajorProgress').onclick=()=>{dirty=false;renderMajorProgress()};
+$('saveMajorProgress').onclick=()=>{const next=rows.map((p,i)=>({name:$('majorName'+i).value.trim(),raw:$('majorPercent'+i).value.trim(),progress:Number($('majorPercent'+i).value)}));if(next.some(p=>!p.name||p.raw===''||!Number.isInteger(p.progress)||p.progress<0||p.progress>100)){$('majorProgressError').textContent='请填写每个专业名称，进度请输入 0–100 的整数。';return}if(new Set(next.map(p=>p.name)).size!==next.length){$('majorProgressError').textContent='专业名称不能重复。';return}db.majorProgress=next.map(({name,progress})=>({name,progress}));dirty=false;const saved=persist();renderMajorProgress();if(saved)toast('专业名称和建设进度已保存')};}
+const beforeProgressShow=window.showPage;window.showPage=id=>{beforeProgressShow(id);if(current===id&&id==='dashboard'&&!dirty)renderMajorProgress()};renderMajorProgress();
+function knowledge(c){return (db.graphs[c.id]?.nodes||[]).filter(n=>n.type==='知识点')}
+function approved(c){return !db.graphs[c.id]?.reviewRequired&&knowledge(c).length>0}
+function summary(){const valid=db.courses.filter(approved);return {majors:new Set(db.courses.map(c=>c.major)).size,courses:db.courses.length,knowledge:valid.reduce((n,c)=>n+knowledge(c).length,0),valid:valid.length,review:db.courses.filter(c=>db.graphs[c.id]?.reviewRequired).length,complete:db.courses.filter(c=>c.values.every(Boolean)).length,missing:db.courses.reduce((n,c)=>n+c.values.filter(v=>!v).length,0)}}
+function renderDashboard(){const s=summary();$('dashboard').querySelector('.cards').innerHTML=[['已录入课程的专业',s.majors,'建设进度条目与专业数量分开统计'],['课程总数',s.courses,'按当前课程列表统计'],['已核对知识点',s.knowledge,`有知识点且已核对的课程 ${s.valid} 门`],['CTI 完整录入课程',`${s.complete} / ${s.courses}`,`未录入能力单元格 ${s.missing} 项`]].map(([label,value,note])=>`<div class="card"><div class="muted">${label}</div><div class="metric">${value}</div><div class="cti-sub">${note}</div></div>`).join('');$('dashboard').querySelector('.grid2 .card:last-child').innerHTML=`<h3>数据完整性摘要</h3><div class="analysis-row"><span>图谱待核对课程</span><b>${s.review} 门</b></div><div class="analysis-row"><span>尚未录入知识点的课程</span><b>${db.courses.filter(c=>!knowledge(c).length).length} 门</b></div><div class="analysis-row"><span>建设进度填报条目</span><b>${getMajorProgress().length} 项</b></div><p class="cti-sub">知识冗余：${s.valid>=2?'可按已核对知识点进行名称匹配':'待至少两门课程补全并核对图谱'}。知识缺口：待提供培养目标知识清单。</p><button class="btn" id="checkGraphs">核对课程图谱</button>`;$('checkGraphs').onclick=()=>showPage('editor');renderMajorProgress()}
+function renderKnowledgeMap(){const majors=[...new Set([...getMajorProgress().map(p=>p.name),...db.courses.map(c=>c.major)])];$('map').innerHTML=`<div class="cti-note">按“专业／阶段 → 课程 → 已保存知识点”展示真实结构。未核对的旧图谱单独提示，未录入的专业保留空状态。</div>${majors.map(m=>{const cs=db.courses.filter(c=>c.major===m);return `<div class="card cti-section"><h3>${esc(m)}</h3>${cs.length?`<div class="cti-grid">${cs.map(c=>`<div class="card"><h3>${esc(c.name)}</h3><p class="cti-sub">${esc(c.code||'未填写代码')} · ${esc(c.teacher)} · ${esc(c.group)}</p><p>${db.graphs[c.id]?.reviewRequired?'<span class="badge warn">旧图谱待核对，暂不展示为有效知识</span>':knowledge(c).length?knowledge(c).map(n=>`<span class="badge">${esc(n.name)}</span>`).join(' '):'<span class="muted">尚未录入课程知识点</span>'}</p><button class="btn" data-map-course="${esc(c.id)}">编辑课程图谱</button></div>`).join('')}</div>`:'<p class="cti-sub">尚未录入该专业／阶段的课程。</p>'}</div>`}).join('')}`;$('map').querySelectorAll('[data-map-course]').forEach(b=>b.onclick=()=>{selectedCourse=b.dataset.mapCourse;showPage('editor')})}
+function redundancyPairs(){const cs=db.courses.filter(approved),pairs=[];for(let i=0;i<cs.length;i++)for(let j=i+1;j<cs.length;j++){const norm=c=>new Set(knowledge(c).map(n=>n.name.trim().toLowerCase()).filter(Boolean)),a=norm(cs[i]),b=norm(cs[j]),shared=[...a].filter(n=>b.has(n)),union=new Set([...a,...b]);pairs.push({a:cs[i].name,b:cs[j].name,shared,percent:union.size?Math.round(shared.length/union.size*100):0})}return pairs}
+function renderRedundancy(){const pairs=redundancyPairs();$('redundancy').innerHTML=`<div class="cti-note">仅比较已核对图谱的知识点名称（忽略首尾空格与英文大小写）。重叠率 = 共同名称数 ÷ 两门课程名称并集数；不代表语义相似度，也不自动判定重复教学。</div><div class="card"><h3>课程知识重叠检查</h3>${pairs.length?`<div class="cti-table-wrap"><table class="cti-table"><thead><tr><th>课程 A</th><th>课程 B</th><th>名称重叠率</th><th>共同知识点</th></tr></thead><tbody>${pairs.map(p=>`<tr><td>${esc(p.a)}</td><td>${esc(p.b)}</td><td>${p.percent}%</td><td>${p.shared.map(esc).join('、')||'未发现同名知识点'}</td></tr>`).join('')}</tbody></table></div>`:'<div class="cti-empty">待补充数据：至少需要两门课程录入知识点并完成核对。</div>'}</div>`}
+function renderGap(){const unrecorded=db.skills.filter((s,i)=>!db.courses.some(c=>c.values[i]>0)),below=db.skills.filter((s,i)=>db.courses.some(c=>c.values[i]>0)&&!db.courses.some(c=>c.values[i]>=3));$('gap').innerHTML=`<div class="cti-note">未提供培养目标及目标知识清单，暂不能计算知识缺口或培养目标达成率。以下 CTI 信息仅用于查看课程等级分布。</div><div class="card"><h3>知识缺口分析 · 待补充数据</h3><p>需补充专业培养目标、目标知识清单，以及经核对的课程知识图谱。</p></div><div class="cti-grid cti-section"><div class="card"><h3>尚无课程录入的能力 · ${unrecorded.length} 项</h3>${unrecorded.map(s=>`<p>${s.id} ${esc(s.cn)}</p>`).join('')||'<p>19 项能力均已有课程录入等级。</p>'}</div><div class="card"><h3>尚无课程达到 M／E · ${below.length} 项</h3><p class="cti-sub">以 Level 3 为观察阈值，不是正式培养目标缺口结论。</p>${below.map(s=>`<div class="course-row"><span>${s.id} ${esc(s.cn)}</span><span class="badge">最高 ${levels[Math.max(...db.courses.map(c=>c.values[db.skills.indexOf(s)]))]}</span></div>`).join('')}</div></div>`}
+const reviewBanner=document.createElement('div');reviewBanner.className='cti-note';$('editor').prepend(reviewBanner);
+function renderGraphReview(){const c=db.courses.find(c=>c.id===selectedCourse)||db.courses[0];if(!c)return;const g=db.graphs[c.id];reviewBanner.innerHTML=`<b>${esc(c.name)}</b> · ${esc(c.major)} · ${esc(c.teacher)}<br>${g?.reviewRequired?'此图谱含旧版数据库示例内容，暂不计入有效知识统计。请修改节点并保存，再确认核对完成。 <button class="btn" id="confirmGraphReview">确认当前已保存图谱适用于本课程</button>':knowledge(c).length?'显示当前已保存课程图谱。':'尚未录入知识点，请从本课程教学内容建立图谱。'}`;if($('confirmGraphReview'))$('confirmGraphReview').onclick=()=>{if(!confirm('确认已保存的知识点均适用于这门课程？确认后将纳入知识统计。'))return;g.reviewRequired=false;g.reviewNote='';persist();renderGraphReview();toast('已核对，图谱已纳入统计')}}
+const oldGraphChange=graphSelect.onchange;graphSelect.onchange=()=>{oldGraphChange();renderGraphReview()};
+const oldShowV3=window.showPage;window.showPage=id=>{oldShowV3(id);if(current!==id||dirty)return;if(id==='dashboard')renderDashboard();if(id==='map')renderKnowledgeMap();if(id==='redundancy')renderRedundancy();if(id==='gap')renderGap();if(id==='editor')renderGraphReview()};
+document.querySelector('.top-actions .btn').onclick=()=>{if(dirty){toast('请先保存或撤销修改');return}showPage(current);toast('已按当前保存的数据重新统计')};
+$('editor').querySelectorAll('button').forEach(b=>{if(b.textContent.includes('AI 从大纲')){b.disabled=true;b.title='离线版未接入 AI 服务';b.textContent='AI 抽取（未接入）'}});
+const oldCourseSave=window.createCourse;window.createCourse=()=>{oldCourseSave();if(!$('modal').classList.contains('show')&&current==='dashboard')renderDashboard()};
+window.onload=()=>{loadGraph();renderGraph();renderGraphReview()};renderDashboard();
+
+window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});renderCourses();if(!storageOK)toast('本地存储不可用，请使用矩阵页导出备份');
+})();
+</script>
+
+</body>
+</html>
